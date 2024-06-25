@@ -1,0 +1,64 @@
+import React from "react";
+import Image from "next/image";
+import { topCategoryStyles } from "@/constants";
+import { cn } from "@/lib/utils";
+
+interface CategoryProps {
+  category: {
+    name: string;
+    count: number;
+    totalCount: number;
+  };
+}
+
+interface ProgressProps {
+  value: number;
+  className?: string;
+  indicatorClassName?: string;
+}
+
+const Progress = ({ value, className, indicatorClassName }: ProgressProps) => {
+  return (
+    <div className={cn("relative bg-gray-200 rounded", className)}>
+      <div
+        className={cn(
+          "absolute left-0 top-0 h-full bg-blue-500 rounded",
+          indicatorClassName
+        )}
+        style={{ width: `${value}%` }}
+      />
+    </div>
+  );
+};
+
+const Category = ({ category }: CategoryProps) => {
+  const {
+    bg,
+    circleBg,
+    text: { main, count },
+    progress: { bg: progressBg, indicator },
+    icon,
+  } = topCategoryStyles[category.name as keyof typeof topCategoryStyles] ||
+  topCategoryStyles.default;
+
+  return (
+    <div className={cn("gap-[18px] flex p-4 rounded-xl", bg)}>
+      <figure className={cn("flex-center size-10 rounded-full", circleBg)}>
+        <Image src={icon} width={20} height={20} alt={category.name} />
+      </figure>
+      <div className="flex w-full flex-1 flex-col gap-2">
+        <div className="text-14 flex justify-between">
+          <h2 className={cn("font-medium", main)}>{category.name}</h2>
+          <h3 className={cn("font-normal", count)}>{category.count}</h3>
+        </div>
+        <Progress
+          value={(category.count / category.totalCount) * 100}
+          className={cn("h-2 w-full", progressBg)}
+          indicatorClassName={cn("h-2 w-full", indicator)}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default Category;
