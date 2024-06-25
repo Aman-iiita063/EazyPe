@@ -19,8 +19,19 @@ import { Footer } from "./Footer";
 
 interface MobileNavProps {
   user: {
+    $id: string;
+    email: string;
+    userId: string;
+    dwollaCustomerUrl: string;
     firstName: string;
     lastName: string;
+    address1: string;
+    city: string;
+    postalCode: string;
+    dateOfBirth: string;
+    ssn: string;
+    dwollaCustomerId: string;
+    state: string;
   };
 }
 
