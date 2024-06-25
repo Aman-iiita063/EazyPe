@@ -21,10 +21,14 @@ const {
   APPWRITE_BANK_COLLECTION_ID: BANK_COLLECTION_ID,
 } = process.env;
 
-export const getUserInfo = async ({ userId }: getUserInfoProps) => {
+const isValidPostalCode = (postalCode: string): boolean => {
+  const postalCodeRegex = /^\d{5}(-\d{4})?$/; // Example regex for US ZIP code
+  return postalCodeRegex.test(postalCode);
+};
+
+export const getUserInfo = async ({ userId }: { userId: string }) => {
   try {
     const { database } = await createAdminClient();
-
     const user = await database.listDocuments(
       DATABASE_ID!,
       USER_COLLECTION_ID!,
@@ -33,11 +37,18 @@ export const getUserInfo = async ({ userId }: getUserInfoProps) => {
 
     return parseStringify(user.documents[0]);
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching user info:", error);
+    throw error;
   }
 };
 
-export const signIn = async ({ email, password }: signInProps) => {
+export const signIn = async ({
+  email,
+  password,
+}: {
+  email: string;
+  password: string;
+}) => {
   try {
     const { account } = await createAdminClient();
     const session = await account.createEmailPasswordSession(email, password);
@@ -53,19 +64,23 @@ export const signIn = async ({ email, password }: signInProps) => {
 
     return parseStringify(user);
   } catch (error) {
-    console.error("Error", error);
+    console.error("Error during sign in:", error);
+    throw error;
   }
 };
 
 export const signUp = async ({ password, ...userData }: SignUpParams) => {
-  const { email, firstName, lastName } = userData;
+  const { email, firstName, lastName, postalCode } = userData;
 
-  let newUserAccount;
+  if (!isValidPostalCode(postalCode)) {
+    console.error("Invalid postal code format");
+    throw new Error("Invalid postal code format");
+  }
 
   try {
     const { account, database } = await createAdminClient();
 
-    newUserAccount = await account.create(
+    const newUserAccount = await account.create(
       ID.unique(),
       email,
       password,
@@ -106,7 +121,8 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
 
     return parseStringify(newUser);
   } catch (error) {
-    console.error("Error", error);
+    console.error("Error during sign up:", error);
+    throw error;
   }
 };
 
@@ -119,7 +135,7 @@ export async function getLoggedInUser() {
 
     return parseStringify(user);
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching logged in user:", error);
     return null;
   }
 }
@@ -132,6 +148,7 @@ export const logoutAccount = async () => {
 
     await account.deleteSession("current");
   } catch (error) {
+    console.error("Error during logout:", error);
     return null;
   }
 };
@@ -152,7 +169,8 @@ export const createLinkToken = async (user: User) => {
 
     return parseStringify({ linkToken: response.data.link_token });
   } catch (error) {
-    console.log(error);
+    console.error("Error creating link token:", error);
+    throw error;
   }
 };
 
@@ -183,7 +201,8 @@ export const createBankAccount = async ({
 
     return parseStringify(bankAccount);
   } catch (error) {
-    console.log(error);
+    console.error("Error creating bank account:", error);
+    throw error;
   }
 };
 
@@ -227,7 +246,7 @@ export const exchangePublicToken = async ({
     });
 
     // If the funding source URL is not created, throw an error
-    if (!fundingSourceUrl) throw Error;
+    if (!fundingSourceUrl) throw new Error("Failed to create funding source");
 
     // Create a bank account using the user ID, item ID, account ID, access token, funding source URL, and shareableId ID
     await createBankAccount({
@@ -247,14 +266,14 @@ export const exchangePublicToken = async ({
       publicTokenExchange: "complete",
     });
   } catch (error) {
-    console.error("An error occurred while creating exchanging token:", error);
+    console.error("An error occurred while exchanging public token:", error);
+    throw error;
   }
 };
 
-export const getBanks = async ({ userId }: getBanksProps) => {
+export const getBanks = async ({ userId }: { userId: string }) => {
   try {
     const { database } = await createAdminClient();
-
     const banks = await database.listDocuments(
       DATABASE_ID!,
       BANK_COLLECTION_ID!,
@@ -263,14 +282,14 @@ export const getBanks = async ({ userId }: getBanksProps) => {
 
     return parseStringify(banks.documents);
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching banks:", error);
+    throw error;
   }
 };
 
-export const getBank = async ({ documentId }: getBankProps) => {
+export const getBank = async ({ documentId }: { documentId: string }) => {
   try {
     const { database } = await createAdminClient();
-
     const bank = await database.listDocuments(
       DATABASE_ID!,
       BANK_COLLECTION_ID!,
@@ -279,16 +298,18 @@ export const getBank = async ({ documentId }: getBankProps) => {
 
     return parseStringify(bank.documents[0]);
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching bank:", error);
+    throw error;
   }
 };
 
 export const getBankByAccountId = async ({
   accountId,
-}: getBankByAccountIdProps) => {
+}: {
+  accountId: string;
+}) => {
   try {
     const { database } = await createAdminClient();
-
     const bank = await database.listDocuments(
       DATABASE_ID!,
       BANK_COLLECTION_ID!,
@@ -299,6 +320,7 @@ export const getBankByAccountId = async ({
 
     return parseStringify(bank.documents[0]);
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching bank by account ID:", error);
+    throw error;
   }
 };
